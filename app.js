@@ -33,9 +33,12 @@ const init = () => {
   //   resetGame();
   addInput();
 };
-
+let randomWord;
+let randomWordArray = [];
 const addInput = () => {
-  const randomWord = words[Math.floor(Math.random() * words.length)];
+  randomWord = words[Math.floor(Math.random() * words.length)];
+  randomWordArray = randomWord.split('');
+
   console.log(randomWord);
   let inputLength = randomWord.length;
   for (let i = 0; i < inputLength; i++) {
@@ -45,6 +48,17 @@ const addInput = () => {
     document.querySelector('.wordContainer').appendChild(item);
   }
 };
+
+document.addEventListener('keydown', function (event) {
+  if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
+    if (randomWordArray.includes(event.key)) {
+      //Hedhy(index) blasa  mtaa l'element, juste khdodh children mtaa wordContainer,  w hot letter fi l'index
+      let index = randomWordArray.indexOf(event.key);
+    } else {
+      onFailAddElement();
+    }
+  }
+});
 init();
 
 const onFailAddElement = () => {
