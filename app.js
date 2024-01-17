@@ -6,10 +6,12 @@ const body = document.querySelector('.body');
 const head = document.querySelector('.head');
 const hangerStand = document.querySelector('.hangerStand');
 const hangerHook = document.querySelector('.hangerHook');
-const btn = document.querySelector('#btn');
+const btn = document.querySelector('.btn');
 const hangerContainer = document.querySelector('.hangerContainer');
+const wordContainer = document.querySelector('.wordContainer');
+const inc = document.querySelector('#incorrect');
 let counter = 1;
-let isPlaying = false;
+let isPlaying = true;
 
 const words = [
   'apple',
@@ -30,63 +32,72 @@ const words = [
 ];
 
 const init = () => {
-  //resetGame();
   addInput();
 };
 let randomWord;
 let randomWordArray = [];
+let remainingWords = [];
+
+// function that adds each letter as a div
 const addInput = () => {
   randomWord = words[Math.floor(Math.random() * words.length)];
   randomWordArray = randomWord.split('');
-
+  remainingWords = remainingWords.concat(randomWordArray);
   console.log(randomWord);
   let inputLength = randomWord.length;
+  // we loop on the number of letters in the random word and create a div for each letter
   for (let i = 0; i < inputLength; i++) {
     const item = document.createElement('div');
     item.classList.add(`word`);
-    item.setAttribute('id', `ite-${i}`);
-    document.querySelector('.wordContainer').appendChild(item);
+    wordContainer.appendChild(item);
   }
 };
-
+let correctlyGuessedLetters = [];
+// a set because there is no need to add the same letter twice
+let incorrectlyGuessedLetters = new Set();
 // Écouteur d'événements pour détecter les touches du clavier
 document.addEventListener('keydown', function (event) {
-
-  // Vérifie si la touche pressée est une lettre de l'alphabet (a-z ou A-Z)
-  if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
-
-    // Vérifie si la lettre pressée est présente dans le mot à deviner
-    if (randomWordArray.includes(event.key)) {
-
-      // Sélectionne tous les éléments avec la classe 'word' (représentant les lettres à deviner)
-      const wordElements = document.querySelectorAll('.word');
-
-      // Trouve l'index de la lettre correcte dans le mot à deviner
-      const correctIndex = randomWordArray.indexOf(event.key);
-
-      // Modifie le contenu de l'élément correspondant pour afficher la lettre correcte
-      wordElements[correctIndex].textContent = event.key;
-
-      // Vérifie si toutes les lettres ont été devinées
-      const allLettersGuessed = wordElements.every(element => element.textContent !== '');
-      
-      // Si toutes les lettres ont été devinées, affiche un message de victoire
-      if (allLettersGuessed) {
-        isPlaying = false;
-        alert('You Won!');
+  // we check if the key length is 1 and if it's a letter
+  if (isPlaying && event.key.length === 1 && event.key.match(/[a-z]/i)) {
+    // we check if the remaining words array contains the key pressed
+    if (remainingWords.includes(event.key)) {
+      // if it does, we get all the indexes of the letter pressed in the random word because it can be repeated
+      let indexes = [];
+      // we get the index of the pressed letter in the array
+      let index = randomWordArray.indexOf(event.key);
+      // if the letter exists it array we add it to indexes, and then we change the index to the next index of the same pressed letter
+      while (index !== -1) {
+        indexes.push(index);
+        index = randomWordArray.indexOf(event.key, index + 1);
       }
-
+      // we loop on the indexes and put each letter(if more than one) in the corresponding index in the wordContainer
+      indexes.forEach((index) => {
+        wordContainer.children[
+          index
+        ].innerHTML = `<div>${randomWordArray[index]}</div>`;
+        // we add it to the correctly guessed letters array
+        correctlyGuessedLetters.push(randomWordArray[index]);
+        // we remove it from the remaining words array
+        remainingWords.splice(remainingWords.indexOf(event.key), 1);
+      });
     } else {
-      // Si la lettre pressée n'est pas dans le mot à deviner, exécute une fonction pour gérer l'échec
+      //if the letter pressed is not in the random word, we call the function that adds the corresponding hangman elements
+      incorrectlyGuessedLetters.add(event.key);
       onFailAddElement();
+      console.log(counter);
+      addIncorrectWords();
     }
+    verifyGame();
   }
 });
-
-// Initialise le jeu (non présent dans le code fourni, mais inclus dans le commentaire)
-init();
-
-
+// to avoid spam we just added only 1 word to the incorrect words(if pressed more than once it will be not added twice)
+const addIncorrectWords = () => {
+  incorrectlyGuessedLetters.forEach((word) => {
+    if (inc.innerHTML.includes(word)) return;
+    inc.innerHTML += `${word} `;
+  });
+};
+// if the counter is below 9(tries), user still have chances, so we simply remove the hangman element
 const onFailAddElement = () => {
   if (counter < 9) {
     isPlaying = true;
@@ -94,15 +105,39 @@ const onFailAddElement = () => {
 
     item.classList.remove('hidden');
     counter++;
-    console.log(counter);
   } else {
     isPlaying = false;
-    btn.disabled = true;
-    alert('You Lost!');
+  }
+};
+//replay button click
+btn.addEventListener('click', () => {
+  if (isPlaying) return;
+  init();
+  btn.classList.add('hidden');
+  resetGame();
+});
+
+const verifyGame = () => {
+  if (remainingWords.length === 0) {
+    alert('you win!');
+    isPlaying = false;
+    btn.classList.remove('hidden');
+  }
+
+  if (counter > 8 && remainingWords.length - 1 !== 0) {
+    alert('You lose!');
+    isPlaying = false;
+    btn.classList.remove('hidden');
   }
 };
 
+//we reset the game and different components
 const resetGame = () => {
+  // we remove the "inputs" divs that we added based on letter length
+  while (wordContainer.firstChild) {
+    wordContainer.removeChild(wordContainer.firstChild);
+  }
+
   arm_left.classList.add('hidden');
   arm_right.classList.add('hidden');
   leg_left.classList.add('hidden');
@@ -111,5 +146,14 @@ const resetGame = () => {
   hangerHook.classList.add('hidden');
   hangerStand.classList.add('hidden');
   head.classList.add('hidden');
+  btn.classList.add('hidden');
+  isPlaying = true;
   counter = 1;
+  remainingWords = [];
+  correctlyGuessedLetters = [];
+  incorrectlyGuessedLetters = new Set();
+
+  inc.innerHTML = '';
+  init();
 };
+init();
