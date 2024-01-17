@@ -30,7 +30,7 @@ const words = [
 ];
 
 const init = () => {
-  //   resetGame();
+  //resetGame();
   addInput();
 };
 let randomWord;
@@ -49,17 +49,43 @@ const addInput = () => {
   }
 };
 
+// Écouteur d'événements pour détecter les touches du clavier
 document.addEventListener('keydown', function (event) {
+
+  // Vérifie si la touche pressée est une lettre de l'alphabet (a-z ou A-Z)
   if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
+
+    // Vérifie si la lettre pressée est présente dans le mot à deviner
     if (randomWordArray.includes(event.key)) {
-      //Hedhy(index) blasa  mtaa l'element, juste khdodh children mtaa wordContainer,  w hot letter fi l'index
-      let index = randomWordArray.indexOf(event.key);
+
+      // Sélectionne tous les éléments avec la classe 'word' (représentant les lettres à deviner)
+      const wordElements = document.querySelectorAll('.word');
+
+      // Trouve l'index de la lettre correcte dans le mot à deviner
+      const correctIndex = randomWordArray.indexOf(event.key);
+
+      // Modifie le contenu de l'élément correspondant pour afficher la lettre correcte
+      wordElements[correctIndex].textContent = event.key;
+
+      // Vérifie si toutes les lettres ont été devinées
+      const allLettersGuessed = wordElements.every(element => element.textContent !== '');
+      
+      // Si toutes les lettres ont été devinées, affiche un message de victoire
+      if (allLettersGuessed) {
+        isPlaying = false;
+        alert('You Won!');
+      }
+
     } else {
+      // Si la lettre pressée n'est pas dans le mot à deviner, exécute une fonction pour gérer l'échec
       onFailAddElement();
     }
   }
 });
+
+// Initialise le jeu (non présent dans le code fourni, mais inclus dans le commentaire)
 init();
+
 
 const onFailAddElement = () => {
   if (counter < 9) {
